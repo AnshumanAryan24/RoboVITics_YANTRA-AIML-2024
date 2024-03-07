@@ -1,5 +1,5 @@
 '''
-Detect people and label them in video captured through cv2
+Detect and classify objects and label them in video captured through cv2
 Class with utility functions.
 Create object of class and use start() method of class to start capturing video and 
 simultaneously detecting.
@@ -15,7 +15,7 @@ class DetectorY5():
     def __init__(self):
         self.detector = 'ultralytics/yolov5'
         self.specifier = 'yolov5s'
-        self.path = './media/frame.jpg'
+        self.path = './media'
         self.model = torch.hub.load(self.detector, self.specifier)
 
     # Private utility functions
@@ -32,15 +32,15 @@ class DetectorY5():
     # User visible functions
 
     #START FUNCTION
-    def start(self, show_window: bool = True, save_video: bool = False):
+    def start(self, show_window: bool = True, save_video: bool = False, vid_file_name: str = "video"):
         '''
         NOTE: MORE LOGIC TO BE ADDED
         Start object detection using webcam.
         save_video decides whether to SAVE the frames as a collective video.
         show_window decides whether to SHOW the frames as a collective video.
 
-        Function is able to detect people in almost all orientations and even when obstructed 
-        by some object in front.
+        Function is able to detect and classify objects in almost all orientations and even when obstructed 
+        by some other object in front, which is also usually classified.
         '''
 
         if (not os.path.exists("./media")):
@@ -51,19 +51,37 @@ class DetectorY5():
             print("Camera not working")
             print("Exiting ...")
         
+        writer = None
+        if (save_video):
+            writer = cv2.VideoWriter("media/"+vid_file_name+".avi", 
+                                     cv2.VideoWriter_fourcc(*'MJPG'), 10, 
+                                     (int(capture.get(3)), int(capture.get(4))))  # (width, height)
+        
         # else
         while (not self.to_stop()):
             ret, image = capture.read()
             # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            cv2.imwrite(self.path, image)
+            cv2.imwrite(self.path+"/frame.jpg", image)
 
-            results = self.model(self.path)
+            results = self.model(self.path+"/frame.jpg")
+            frame = results.render()[0]
 
-            cv2.imshow("Result Window", results.render()[0])
-            cv2.waitKey(1)
+            if (show_window):
+                cv2.imshow("Result Window", frame)
+                cv2.waitKey(1)
+            
+            if (save_video):
+                writer.write(frame)
         
-        cv2.destroyAllWindows()
+        if (show_window):
+            cv2.destroyAllWindows()
+        
+        try: os.remove(self.path+"/frame.jpg")
+        except: print("Error locating last captured frame, might not be removed.")
+        
         capture.release()
+        if (save_video):
+            writer.release()
 
 
 if __name__ == "__main__":
