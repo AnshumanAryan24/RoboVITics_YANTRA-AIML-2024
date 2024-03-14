@@ -21,10 +21,6 @@ while True:
     success, img = video.read()
     img = cv2.flip(img, 1)
 
-    if not success:
-        print("Error: Unable to read frame from video source.")
-        break
-
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     results = hands.process(imgRGB)
