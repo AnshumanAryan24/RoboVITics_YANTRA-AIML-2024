@@ -13,11 +13,13 @@ hands = mpHands.Hands(max_num_hands=1)
 mpDraw = mp.solutions.drawing_utils
 
 tipIds = [4, 8, 12, 16, 20]
+fingerName = ['thumb', 'index finger', 'middle finger', 'ring finger', 'little finger']
 
 prevTime = 0
 
 while True:
     success, img = video.read()
+    img = cv2.flip(img, 1)
 
     if not success:
         print("Error: Unable to read frame from video source.")
@@ -43,7 +45,7 @@ while True:
         fingers = []
 
         # thumb
-        if lmList[tipIds[0]][1] > lmList[tipIds[0] - 1][1]:
+        if ((lmList[tipIds[0]][1] > lmList[tipIds[0] - 1][1] and lmList[tipIds[0]][2] <= lmList[tipIds[0] - 1][2]) or (lmList[tipIds[0]][1] < lmList[tipIds[0] - 1][1] and lmList[tipIds[0]][2] >= lmList[tipIds[0] - 1][2])):
             fingers.append(1)
         else:
             fingers.append(0)
@@ -54,6 +56,18 @@ while True:
                 fingers.append(1)
             else:
                 fingers.append(0)
+
+        totalFingers = sum(fingers)
+
+        if totalFingers == 1:
+            for fin in range(5):
+                if fingers[fin] == 1:
+                    upFinger = fingerName[fin]
+                    cv2.putText(img, str(upFinger), (275, 445), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
+        elif totalFingers == 5:
+            cv2.putText(img, 'palm', (275, 445), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
+
+
 
         totalFingers = sum(fingers)
         print(totalFingers)
@@ -69,6 +83,6 @@ while True:
     cv2.imshow("Image", img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
+q
 video.release()
 cv2.destroyAllWindows()
